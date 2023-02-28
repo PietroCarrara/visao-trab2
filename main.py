@@ -2,8 +2,6 @@ import cv2
 import itertools
 import numpy as np
 import multiprocessing as mp
-from math import sqrt
-
 
 ##############
 #    DEFS    #
@@ -27,16 +25,17 @@ def distance_weak(p1, p2):
 
 # Main function
 def process_step(xy):
+  # Given a position on the left image
   x, y = xy
-  match: Match = None
 
-  # Run through the right image
+  # Run through the right image and find the best match
+  match: Match = None
   for xr in range(WIDTH):
     # Run through the window accumulating the distance
     d = 0
     for wy in range(WINDOW_SIZE):
       for wx in range(WINDOW_SIZE):
-        d += distance(get_pixel(im_left, x+wx, y+wy), get_pixel(im_right, xr+wx, y+wy))
+        d += distance(get_pixel(im_left, x+wx, y+wy), get_pixel(im_right, xr+wx, y+wy))**2
 
     # Find the match that minimizes the distance
     if match is None or match.distance > d:
@@ -64,7 +63,7 @@ WIDTH = im_left.shape[0]
 HEIGHT = im_left.shape[1]
 
 # Dimension of square window
-WINDOW_SIZE = 5
+WINDOW_SIZE = 3
 
 matches = np.empty([WIDTH, HEIGHT], dtype=Match)
 with mp.Pool() as pool:
