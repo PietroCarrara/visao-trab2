@@ -9,19 +9,34 @@ import multiprocessing as mp
 
 def get_pixel(im, x, y):
   if x >= 0 and y >= 0 and x < im.shape[0] and y < im.shape[0]:
-    return im[x, y]
-  return [0, 0, 0]
+    return im[x, y].astype(float)
+  return np.zeros(3)
 
-def distance_weak(p1, p2):
-  assert(len(p1) == len(p2))
+def distance_weak(xy1, xy2):
+  d = 0
+  x1, y1 = xy1
+  x2, y2 = xy2
+  for wy in range(WINDOW_SIZE):
+      for wx in range(WINDOW_SIZE):
+        p1 = get_pixel(im_left, x1+wx, y1+wy)
+        p2 = get_pixel(im_right, x2+wx, y2+wy)
+        d += np.sqrt(np.sum((p1 - p2)**2))
 
-  n = len(p1)
-  res = 0
-  for i in range(n):
-    c = float(p1[i]) - float(p2[i])
-    res += c*c
+  return d
 
-  return res
+def distance_robust(xy1, xy2):
+  d = [0] * (WINDOW_SIZE*WINDOW_SIZE)
+  x1, y1 = xy1
+  x2, y2 = xy2
+  for wy in range(WINDOW_SIZE):
+      for wx in range(WINDOW_SIZE):
+        p1 = get_pixel(im_left, x1+wx, y1+wy)
+        p2 = get_pixel(im_right, x2+wx, y2+wy)
+
+        # Euclidean distance
+        d[wy * WINDOW_SIZE + wx] = np.sqrt(np.sum((p1 - p2)**2))
+
+  return np.median(d)
 
 # Main function
 def process_step(xy):
@@ -31,15 +46,11 @@ def process_step(xy):
   # Run through the right image and find the best match
   match: Match = None
   for xr in range(WIDTH):
-    # Run through the window accumulating the distance
-    d = 0
-    for wy in range(WINDOW_SIZE):
-      for wx in range(WINDOW_SIZE):
-        d += distance(get_pixel(im_left, x+wx, y+wy), get_pixel(im_right, xr+wx, y+wy))**2
-
     # Find the match that minimizes the distance
+    d = distance((x,y), (xr,y))
     if match is None or match.distance > d:
-      match = Match(d, xr - x)
+      match = Match(d, x - xr)
+
 
   return x, y, match
 
@@ -49,21 +60,25 @@ class Match:
     self.disparity = disparity
 
 ##############
-#    MAIN    #
+#   PARAMS   #
 ##############
 
 distance = distance_weak
 
-im_left = cv2.cvtColor(cv2.imread('cones_l.png'), cv2.COLOR_BGR2LAB)
-im_right = cv2.cvtColor(cv2.imread('cones_r.png'), cv2.COLOR_BGR2LAB)
+# Dimension of the square window
+WINDOW_SIZE = 3
+
+im_left = cv2.cvtColor(cv2.imread('cones_l_small.png'), cv2.COLOR_BGR2LAB)
+im_right = cv2.cvtColor(cv2.imread('cones_r_small.png'), cv2.COLOR_BGR2LAB)
+
+##############
+#    MAIN    #
+##############
 
 assert(im_left.shape == im_right.shape)
 
 WIDTH = im_left.shape[0]
 HEIGHT = im_left.shape[1]
-
-# Dimension of square window
-WINDOW_SIZE = 3
 
 matches = np.empty([WIDTH, HEIGHT], dtype=Match)
 with mp.Pool() as pool:
@@ -90,5 +105,5 @@ im_disp = np.zeros([WIDTH, HEIGHT], dtype=np.uint8)
 
 for y in range(HEIGHT):
   for x in range(WIDTH):
-    im_disp[x, y] = round((disparity_map[x, y] - min) * 255 / (max-min))
+    im_disp[x, y] = 255 - round((disparity_map[x, y] - min) * 255 / (max-min))
 cv2.imwrite('out.png', im_disp)
