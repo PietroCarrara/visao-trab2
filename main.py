@@ -26,22 +26,6 @@ def distance_weak(xy1, xy2):
   return d
 
 def distance_robust(xy1, xy2):
-  d = [0] * (WINDOW_SIZE*WINDOW_SIZE)
-  x1, y1 = xy1
-  x2, y2 = xy2
-  for wy in range(WINDOW_SIZE):
-      for wx in range(WINDOW_SIZE):
-        p1 = get_pixel(im_left, x1+wx, y1+wy)
-        p2 = get_pixel(im_right, x2+wx, y2+wy)
-
-        # SSD
-        d[wy * WINDOW_SIZE + wx] = 0
-        for i in range(len(p1)):
-          d[wy * WINDOW_SIZE + wx] += (p1[i] - p2[i])**2
-
-  return np.median(d)
-
-def distance_robust2(xy1, xy2):
   d = 0
   x1, y1 = xy1
   x2, y2 = xy2
@@ -55,7 +39,7 @@ def distance_robust2(xy1, xy2):
           err += abs(p1[i] - p2[i])
 
         # Função robusta
-        e = 80
+        e = 30
         errs = err**2
         d += errs / (errs + e**2)
 
@@ -86,7 +70,7 @@ class Match:
 #   PARAMS   #
 ##############
 
-distance = distance_robust2
+distance = distance_robust
 
 # Dimension of the square window
 WINDOW_SIZE = 3
