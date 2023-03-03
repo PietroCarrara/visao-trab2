@@ -8,7 +8,7 @@ import multiprocessing as mp
 ##############
 
 def get_pixel(im, x, y):
-  if x >= 0 and y >= 0 and x < im.shape[0] and y < im.shape[0]:
+  if x >= 0 and y >= 0 and x < im.shape[0] and y < im.shape[1]:
     return im[x, y].astype(float)
   return np.zeros(3)
 
@@ -113,4 +113,5 @@ im_disp = np.zeros([WIDTH, HEIGHT], dtype=np.uint8)
 for y in range(HEIGHT):
   for x in range(WIDTH):
     im_disp[x, y] = 255 - round((disparity_map[x, y] - min) * 255 / (max-min))
+
 cv2.imwrite('out.png', im_disp)
