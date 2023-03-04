@@ -27,20 +27,22 @@ if (len(img_out.shape) > 2):
 WIDTH = img_ground.shape[0]
 HEIGHT = img_ground.shape[1]
 
-img_diff = np.zeros([WIDTH, HEIGHT], dtype=np.uint8)
+# Count erros
+img_diff = np.zeros([WIDTH, HEIGHT, 3], dtype=np.uint8)
 err_count = 0
 for y in range(HEIGHT):
   for x in range(WIDTH):
-    err = abs(img_ground[x, y] - img_out[x, y])
+    err = img_ground[x, y] - img_out[x, y]
     if err > GRACE:
+      # Our estimation for this pixel was too low, we should increase it.
+      # Paint it green.
       err_count += 1
-      img_diff[x, y] = err - GRACE
-
-# Remap errors to [0, 255] range
-max = np.max(img_diff)
-for y in range(HEIGHT):
-  for x in range(WIDTH):
-    img_diff[x, y] = round(img_diff[x, y]*255/max)
+      img_diff[x, y, 1] = abs(err) - GRACE
+    elif err < -GRACE:
+      # Our estimation for this pixel was too high, we should lower it.
+      # Paint it red.
+      err_count += 1
+      img_diff[x, y, 2] = abs(err) - GRACE
 
 print(f"Total bad pixel count: {err_count}")
 print(f"Bad pixel percentage: {err_count*100 / (WIDTH*HEIGHT):.2f}%")
