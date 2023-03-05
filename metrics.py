@@ -68,4 +68,4 @@ print("Done!")
 
 
 # Calculating Root-Mean square error
-print(f"Root-Mean Square Error: {rmse(img_out, img_ground)}")
+print(f"Root-Mean Square Error: {rmse(img_out, img_ground):.2f}")

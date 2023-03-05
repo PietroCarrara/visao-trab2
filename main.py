@@ -57,7 +57,7 @@ def process_step(xy):
     d = distance((x,y), (xr,y))
     if match.distance > d:
       match.distance = d
-      match.disparity = x - xr
+      match.disparity = xr - x
 
   return x, y, match
 
